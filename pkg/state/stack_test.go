@@ -45,7 +45,7 @@ func TestEmptyStack(t *testing.T) {
 }
 
 func TestStackOrdering(t *testing.T) {
-	fixture := []element{
+	fixture := []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
@@ -81,7 +81,7 @@ func TestStackOrdering(t *testing.T) {
 }
 
 func TestStackPeekXAndLength(t *testing.T) {
-	fixture := []element{
+	fixture := []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
@@ -152,7 +152,7 @@ func TestStackPeekXAndLength(t *testing.T) {
 }
 
 func TestStackClear(t *testing.T) {
-	fixture := []element{
+	fixture := []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
@@ -182,7 +182,7 @@ func TestStackClear(t *testing.T) {
 }
 
 func TestStackSwap(t *testing.T) {
-	input := []element{
+	input := []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
@@ -197,7 +197,7 @@ func TestStackSwap(t *testing.T) {
 		},
 	}
 
-	expected := []element{input[1], input[0], input[2]}
+	expected := []Element{input[1], input[0], input[2]}
 
 	var s stack
 
@@ -221,7 +221,7 @@ func TestStackSwap(t *testing.T) {
 }
 
 func TestStackMarshaling(t *testing.T) {
-	fixture := []element{
+	fixture := []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
@@ -258,7 +258,7 @@ func TestStackMarshaling(t *testing.T) {
 }
 
 func TestStackUnmarshaling(t *testing.T) {
-	fixture := []element{
+	fixture := []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
