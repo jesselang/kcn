@@ -39,7 +39,7 @@ var envCmd = &cobra.Command{
 	Short: "",
 	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
-		st, err := state.ReadState(os.Getenv(state.EnvStatePath))
+		st, err := state.ReadState(os.Getenv(envStatePath))
 		if !envInit {
 			// This branch is likely being executed using shell's process
 			// substitution. Non-zero exit codes won't propagate through
@@ -76,7 +76,7 @@ var envCmd = &cobra.Command{
 				fmt.Printf("export %s= %s=\n", envContext, envNamespace)
 			}
 
-			fmt.Printf("export %s=%s\n", state.EnvStatePath, st.Path())
+			fmt.Printf("export %s=%s\n", envStatePath, st.Path())
 			fmt.Println(
 				`
 kcn() {

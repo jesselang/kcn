@@ -23,4 +23,5 @@ package cmd
 const (
 	envContext   = "KCN_CONTEXT"
 	envNamespace = "KCN_NAMESPACE"
+	envStatePath = "KCN_STATE_PATH"
 )

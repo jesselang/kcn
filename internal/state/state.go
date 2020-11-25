@@ -30,10 +30,6 @@ import (
 	"github.com/jesselang/kcn/internal/kubectl"
 )
 
-const (
-	EnvStatePath = "KCN_STATE_PATH"
-)
-
 type State struct {
 	Stack stack `json:"stack"`
 
