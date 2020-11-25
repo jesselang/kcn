@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/jesselang/kcn/pkg/state"
+	"github.com/jesselang/kcn/internal/state"
 )
 
 var cfgFile string

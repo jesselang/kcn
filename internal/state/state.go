@@ -27,7 +27,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/jesselang/kcn/pkg/kubectl"
+	"github.com/jesselang/kcn/internal/kubectl"
 )
 
 const (

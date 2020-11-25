@@ -26,7 +26,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jesselang/kcn/pkg/state"
+	"github.com/jesselang/kcn/internal/state"
 )
 
 // clearCmd represents the clear command
