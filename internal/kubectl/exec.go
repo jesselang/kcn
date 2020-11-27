@@ -1,4 +1,4 @@
-// Copyright © 2018 Jesse Lang
+// Copyright © 2020 Jesse Lang
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -17,61 +17,35 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 package kubectl
 
-type Stub struct {
-	contexts       []string
-	currentContext string
-	namespaces     map[string][]string
+import (
+	"os/exec"
+	"strings"
+)
+
+type Command struct {
+	_ incomparable
 }
 
-func NewStub() Kubectl {
-	return &Stub{
-		contexts: []string{
-			"alpha-dev",
-			"bravo-stage",
-			"delta-prod",
-		},
-		currentContext: "bravo-stage",
-		namespaces: map[string][]string{
-			"alpha-dev": []string{
-				"app-a",
-				"app-b",
-				"app-c",
-				DefaultNamespace,
-				"kube-system",
-			},
-			"bravo-stage": []string{
-				"app-d",
-				"app-e",
-				"app-f",
-				DefaultNamespace,
-				"kube-system",
-			},
-			"delta-prod": []string{
-				"app-x",
-				"app-y",
-				"app-z",
-				DefaultNamespace,
-				"kube-system",
-			},
-		},
-	}
+func NewKubectl() Kubectl {
+	return &Command{}
 }
 
-func (k *Stub) Contexts() ([]string, error) {
-	return k.contexts, nil
+func (k *Command) Contexts() ([]string, error) {
+	out, err := exec.Command("kubectl", "config",
+		"get-contexts", "-o", "name").Output()
+	return strings.Split(strings.TrimSpace(string(out)), "\n"), err
 }
 
-func (k *Stub) CurrentContext() (string, error) {
-	return k.currentContext, nil
+func (k *Command) CurrentContext() (string, error) {
+	out, err := exec.Command("kubectl", "config", "current-context").Output()
+	return strings.TrimSpace(string(out)), err
 }
 
-func (k *Stub) Namespaces(context string) ([]string, error) {
-	if v, ok := k.namespaces[context]; ok {
-		return v, nil
-	}
-
-	return []string{}, nil
+func (k *Command) Namespaces(context string) ([]string, error) {
+	out, err := exec.Command("kubectl", "--context", context,
+		"get", "namespaces", "-o", "template",
+		"--template={{range .items}}{{.metadata.name}} {{end}}").Output()
+	return strings.Split(strings.TrimSpace(string(out)), " "), err
 }

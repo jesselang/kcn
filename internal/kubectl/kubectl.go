@@ -20,40 +20,18 @@
 
 package kubectl
 
-import (
-	"os/exec"
-	"strings"
-)
-
 const (
 	DefaultNamespace = "default"
 )
 
 type Kubectl interface {
-	GetContextList() ([]string, error)
-	GetCurrentContext() (string, error)
-	GetNamespaceList(context string) ([]string, error)
+	Contexts() ([]string, error)
+	CurrentContext() (string, error)
+	Namespaces(context string) ([]string, error)
 }
 
-type Command struct{}
-
-func NewKubectl() Kubectl {
-	return &Command{}
-}
-
-func (k *Command) GetContextList() ([]string, error) {
-	out, err := exec.Command("kubectl", "config", "get-contexts", "-o", "name").Output()
-	return strings.Split(strings.TrimSpace(string(out)), "\n"), err
-}
-
-func (k *Command) GetCurrentContext() (string, error) {
-	out, err := exec.Command("kubectl", "config", "current-context").Output()
-	return strings.TrimSpace(string(out)), err
-}
-
-func (k *Command) GetNamespaceList(context string) ([]string, error) {
-	out, err := exec.Command("kubectl", "--context", context,
-		"get", "namespaces", "-o", "template",
-		"--template={{range .items}}{{.metadata.name}} {{end}}").Output()
-	return strings.Split(strings.TrimSpace(string(out)), " "), err
-}
+// incomparable is a zero-width, non-comparable type. Adding it to a struct
+// makes that struct also non-comparable, and generally doesn't add
+// any size (as long as it's first).
+// https://blog.golang.org/module-compatibility
+type incomparable [0]func()
