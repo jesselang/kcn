@@ -26,26 +26,8 @@ import (
 	"testing"
 )
 
-func TestEmptyStack(t *testing.T) {
-	var s stack
-	_, err := s.Pop()
-	if err == nil {
-		t.Error("pop on empty stack should fail")
-	}
-
-	_, err = s.Peek()
-	if err == nil {
-		t.Error("peek on empty stack should fail")
-	}
-
-	l := s.Length()
-	if l != 0 {
-		t.Errorf("empty stack Length() should be zero, got %d", l)
-	}
-}
-
-func TestStackOrdering(t *testing.T) {
-	fixture := []Element{
+func elementFixture() []Element {
+	return []Element{
 		{
 			Context:   "alpha-dev",
 			Namespace: "kube-system",
@@ -59,6 +41,33 @@ func TestStackOrdering(t *testing.T) {
 			Namespace: "app-prod",
 		},
 	}
+}
+
+func TestEmptyStack(t *testing.T) {
+	var s stack
+	_, err := s.Pop()
+	if err != errStackEmpty {
+		t.Error("pop on empty stack should fail")
+	}
+
+	_, err = s.Peek()
+	if err != errStackEmpty {
+		t.Error("peek on empty stack should fail")
+	}
+
+	_, err = s.PeekPrev()
+	if err != errStackEmpty {
+		t.Error("peek prev on empty stack should fail")
+	}
+
+	l := s.Length()
+	if l != 0 {
+		t.Errorf("empty stack Length() should be zero, got %d", l)
+	}
+}
+
+func TestStackOrdering(t *testing.T) {
+	fixture := elementFixture()
 
 	var s stack
 
@@ -81,20 +90,7 @@ func TestStackOrdering(t *testing.T) {
 }
 
 func TestStackPeekXAndLength(t *testing.T) {
-	fixture := []Element{
-		{
-			Context:   "alpha-dev",
-			Namespace: "kube-system",
-		},
-		{
-			Context:   "bravo-stage",
-			Namespace: "default",
-		},
-		{
-			Context:   "delta-prod",
-			Namespace: "app-prod",
-		},
-	}
+	fixture := elementFixture()
 
 	var s stack
 
@@ -152,20 +148,7 @@ func TestStackPeekXAndLength(t *testing.T) {
 }
 
 func TestStackClear(t *testing.T) {
-	fixture := []Element{
-		{
-			Context:   "alpha-dev",
-			Namespace: "kube-system",
-		},
-		{
-			Context:   "bravo-stage",
-			Namespace: "default",
-		},
-		{
-			Context:   "delta-prod",
-			Namespace: "app-prod",
-		},
-	}
+	fixture := elementFixture()
 
 	var s stack
 
@@ -182,21 +165,7 @@ func TestStackClear(t *testing.T) {
 }
 
 func TestStackSwap(t *testing.T) {
-	input := []Element{
-		{
-			Context:   "alpha-dev",
-			Namespace: "kube-system",
-		},
-		{
-			Context:   "bravo-stage",
-			Namespace: "default",
-		},
-		{
-			Context:   "delta-prod",
-			Namespace: "app-prod",
-		},
-	}
-
+	input := elementFixture()
 	expected := []Element{input[1], input[0], input[2]}
 
 	var s stack
@@ -206,7 +175,10 @@ func TestStackSwap(t *testing.T) {
 		s.Push(input[i])
 	}
 
-	s.Swap()
+	err := s.Swap()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, v := range expected {
 		popped, err := s.Pop()
@@ -220,21 +192,40 @@ func TestStackSwap(t *testing.T) {
 	}
 }
 
-func TestStackMarshaling(t *testing.T) {
-	fixture := []Element{
-		{
-			Context:   "alpha-dev",
-			Namespace: "kube-system",
-		},
-		{
-			Context:   "bravo-stage",
-			Namespace: "default",
-		},
-		{
-			Context:   "delta-prod",
-			Namespace: "app-prod",
-		},
+func TestStackSwapInsufficient(t *testing.T) {
+	input := elementFixture()[:1]
+
+	var s stack
+
+	// insert input data in reverse order
+	for i := len(input) - 1; i >= 0; i-- {
+		s.Push(input[i])
+
+		err := s.Swap()
+		if err != errStackInsufficient {
+			t.Errorf("stack swap should fail due to insufficient elements %v", err)
+		}
 	}
+}
+
+func TestStackPeekPrevInsufficient(t *testing.T) {
+	input := elementFixture()[:1]
+
+	var s stack
+
+	// insert input data in reverse order
+	for i := len(input) - 1; i >= 0; i-- {
+		s.Push(input[i])
+
+		_, err := s.PeekPrev()
+		if err != errStackInsufficient {
+			t.Errorf("stack peek prev should fail due to insufficient elements %v", err)
+		}
+	}
+}
+
+func TestStackMarshaling(t *testing.T) {
+	fixture := elementFixture()
 
 	var s stack
 
@@ -258,20 +249,7 @@ func TestStackMarshaling(t *testing.T) {
 }
 
 func TestStackUnmarshaling(t *testing.T) {
-	fixture := []Element{
-		{
-			Context:   "alpha-dev",
-			Namespace: "kube-system",
-		},
-		{
-			Context:   "bravo-stage",
-			Namespace: "default",
-		},
-		{
-			Context:   "delta-prod",
-			Namespace: "app-prod",
-		},
-	}
+	fixture := elementFixture()
 
 	fixture_json := []byte(
 		`[{"context":"alpha-dev","namespace":"kube-system"},` +

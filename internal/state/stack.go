@@ -25,6 +25,11 @@ import (
 	"errors"
 )
 
+var (
+	errStackEmpty        = errors.New("stack is empty")
+	errStackInsufficient = errors.New("stack has insufficient elements")
+)
+
 // element to be used in the stack
 type Element struct {
 	Context   string `json:"context"`
@@ -50,7 +55,7 @@ func (s *stack) Push(item Element) {
 
 func (s *stack) Pop() (*Element, error) {
 	if len(s.data) == 0 {
-		return nil, errors.New("stack is empty")
+		return nil, errStackEmpty
 	}
 
 	popped := s.data[0]
@@ -61,28 +66,35 @@ func (s *stack) Pop() (*Element, error) {
 
 func (s *stack) Peek() (*Element, error) {
 	if len(s.data) == 0 {
-		return nil, errors.New("stack is empty")
+		return nil, errStackEmpty
 	}
 
 	return &s.data[0], nil
 }
 
 func (s *stack) PeekPrev() (*Element, error) {
+	if len(s.data) == 0 {
+		return nil, errStackEmpty
+	}
+
 	if len(s.data) < 2 {
-		return nil, errors.New("stack has less than 2 elements")
+		return nil, errStackInsufficient
 	}
 
 	return &s.data[1], nil
 }
 
-func (s *stack) Swap() {
+func (s *stack) Swap() error {
+	// not enough elements to swap
 	if len(s.data) < 2 {
-		return
-	} else {
-		swapped := s.data[0]
-		s.data[0] = s.data[1]
-		s.data[1] = swapped
+		return errStackInsufficient
 	}
+
+	swapped := s.data[0]
+	s.data[0] = s.data[1]
+	s.data[1] = swapped
+
+	return nil
 }
 
 func (s stack) MarshalJSON() ([]byte, error) {
