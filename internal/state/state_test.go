@@ -18,21 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package state
+package state_test
 
 import (
 	"testing"
+
+	"github.com/spf13/afero"
+
+	"github.com/jesselang/kcn/internal/state"
 )
 
-func TestReadState(t *testing.T) {
-	_, err := ReadState("")
-	if err == nil {
-		t.Error("empty state path should fail")
-	}
-
-	_, err = ReadState("nonexistent/path")
-	if err == nil {
-		t.Error("non-existent file at state path should fail")
+func TestStateClearWithoutPathFails(t *testing.T) {
+	st := state.NewState(state.WithFs(afero.NewMemMapFs()))
+	err := st.Clear()
+	if err != state.ErrNoPath {
+		t.Fatal(err)
 	}
 }
 

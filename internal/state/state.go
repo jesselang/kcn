@@ -27,73 +27,99 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/jesselang/kcn/internal/kubectl"
+	"github.com/spf13/afero"
+
+	"github.com/jesselang/kcn/internal/k8s"
+)
+
+var (
+	ErrNoPath   = errors.New("no path set")
+	ErrNotExist = errors.New("does not exist")
 )
 
 type State struct {
 	Stack stack `json:"stack"`
 
 	path string
-	k    kubectl.Kubectl
+
+	kc k8s.Client
+	fs afero.Fs
 }
 
-func NewState(k kubectl.Kubectl) (*State, error) {
-	cache, err := os.UserCacheDir()
-	if err != nil {
-		return nil, err
-	}
+type StateOption func(*State)
 
-	initial := State{
-		path: fmt.Sprintf("%s/kcn-%d-%s", cache, os.Getppid(), randString(6)),
+func WithPath(path string) StateOption {
+	return func(s *State) {
+		s.path = path
 	}
-
-	if k == nil {
-		initial.k = kubectl.NewKubectl()
-	}
-
-	return &initial, initial.Write()
 }
 
-func ReadState(path string) (*State, error) {
-	if len(path) == 0 {
-		return nil, errors.New("no state path given")
+func WithK8sClient(kc k8s.Client) StateOption {
+	return func(s *State) {
+		s.kc = kc
+	}
+}
+
+func WithFs(fs afero.Fs) StateOption {
+	return func(s *State) {
+		s.fs = fs
+	}
+}
+
+func NewState(opts ...StateOption) *State {
+	s := &State{
+		fs: afero.NewOsFs(),
+		kc: k8s.NewKubectlClient(),
 	}
 
-	file, err := os.Open(path)
+	for _, o := range opts {
+		o(s)
+	}
+
+	return s
+}
+
+func (st *State) Read() error {
+	if st.path == "" {
+		return ErrNoPath
+	}
+
+	file, err := os.Open(st.path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
 	b, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var s State
-	err = json.Unmarshal(b, &s)
-	if err != nil {
-		return nil, err
-	}
-
-	s.path = path
-	s.k = kubectl.NewKubectl()
-	return &s, nil
+	return json.Unmarshal(b, &st.Stack)
 }
 
-func (s *State) Path() string {
+func (s State) Path() string {
 	return s.path
 }
 
 func (s *State) Clear() error {
+	if s.path == "" {
+		return ErrNoPath
+	}
+
 	s.Stack.Clear()
 
 	return s.Write()
 }
 
 func (s *State) Write() error {
-	if len(s.path) == 0 {
-		return fmt.Errorf("state path not set")
+	if s.path == "" {
+		cache, err := os.UserCacheDir()
+		if err != nil {
+			return err
+		}
+
+		s.path = fmt.Sprintf("%s/kcn-%d-%s", cache, os.Getppid(), randString(6))
 	}
 
 	file, err := os.OpenFile(s.path, os.O_WRONLY|os.O_CREATE, 0644)
@@ -131,7 +157,7 @@ func (st *State) Update(args ...string) error {
 	}
 	context = args[0]
 
-	ctxList, err := st.k.GetContextList()
+	ctxList, err := st.kc.Contexts()
 	if err != nil {
 		return errors.New("could not get context list")
 	}
@@ -140,12 +166,12 @@ func (st *State) Update(args ...string) error {
 
 	if context == "." {
 		if st.Stack.Length() == 0 {
-			next.Context, err = st.k.GetCurrentContext()
+			next.Context, err = st.kc.CurrentContext()
 			if err != nil {
 				return errors.New("could not get current context")
 			}
 
-			//next.Namespace = kubectl.DefaultNamespace
+			//next.Namespace = k8s.DefaultNamespace
 		} else {
 			curr, err := st.Stack.Peek()
 			if err != nil {
@@ -181,17 +207,17 @@ func (st *State) Update(args ...string) error {
 		}
 	}
 
-	nsList, err := st.k.GetNamespaceList(next.Context)
+	nsList, err := st.kc.Namespaces(next.Context)
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
 			"kcn: could not get namespace list for context %s,"+
 				" falling back to %s\n",
-			next.Context, kubectl.DefaultNamespace)
-		next.Namespace = kubectl.DefaultNamespace
+			next.Context, k8s.DefaultNamespace)
+		next.Namespace = k8s.DefaultNamespace
 	}
 
 	if len(namespace) == 0 || st.Stack.Length() == 0 {
-		next.Namespace = kubectl.DefaultNamespace
+		next.Namespace = k8s.DefaultNamespace
 	} else {
 		if namespace == "-" {
 			prev, err := st.Stack.PeekPrev()

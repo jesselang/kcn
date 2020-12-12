@@ -18,20 +18,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package kubectl
+package k8s
 
-const (
-	DefaultNamespace = "default"
-)
-
-type Kubectl interface {
-	Contexts() ([]string, error)
-	CurrentContext() (string, error)
-	Namespaces(context string) ([]string, error)
+type Stub struct {
+	_              incomparable
+	contexts       []string
+	currentContext string
+	namespaces     map[string][]string
 }
 
-// incomparable is a zero-width, non-comparable type. Adding it to a struct
-// makes that struct also non-comparable, and generally doesn't add
-// any size (as long as it's first).
-// https://blog.golang.org/module-compatibility
-type incomparable [0]func()
+func NewStubClient() Client {
+	return &Stub{
+		contexts: []string{
+			"alpha-dev",
+			"bravo-stage",
+			"delta-prod",
+		},
+		currentContext: "bravo-stage",
+		namespaces: map[string][]string{
+			"alpha-dev": []string{
+				"app-a",
+				"app-b",
+				"app-c",
+				DefaultNamespace,
+				"kube-system",
+			},
+			"bravo-stage": []string{
+				"app-d",
+				"app-e",
+				"app-f",
+				DefaultNamespace,
+				"kube-system",
+			},
+			"delta-prod": []string{
+				"app-x",
+				"app-y",
+				"app-z",
+				DefaultNamespace,
+				"kube-system",
+			},
+		},
+	}
+}
+
+func (s *Stub) Contexts() ([]string, error) {
+	return s.contexts, nil
+}
+
+func (s *Stub) CurrentContext() (string, error) {
+	return s.currentContext, nil
+}
+
+func (s *Stub) Namespaces(context string) ([]string, error) {
+	if v, ok := s.namespaces[context]; ok {
+		return v, nil
+	}
+
+	return []string{}, nil
+}

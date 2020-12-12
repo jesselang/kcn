@@ -40,7 +40,8 @@ var RootCmd = &cobra.Command{
 and other CLI programs that use the kubernetes client.`,
 	Args: cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		st, err := state.ReadState(os.Getenv(envStatePath))
+		st := state.NewState(state.WithPath(os.Getenv(envStatePath)))
+		err := st.Read()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %s\n", err)
 			os.Exit(1)

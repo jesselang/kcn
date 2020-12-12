@@ -17,33 +17,33 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-package kubectl
+package k8s
 
 import (
 	"os/exec"
 	"strings"
 )
 
-type Command struct {
+type kubectl struct {
 	_ incomparable
 }
 
-func NewKubectl() Kubectl {
-	return &Command{}
+func NewKubectlClient() Client {
+	return &kubectl{}
 }
 
-func (k *Command) Contexts() ([]string, error) {
+func (k *kubectl) Contexts() ([]string, error) {
 	out, err := exec.Command("kubectl", "config",
 		"get-contexts", "-o", "name").Output()
 	return strings.Split(strings.TrimSpace(string(out)), "\n"), err
 }
 
-func (k *Command) CurrentContext() (string, error) {
+func (k *kubectl) CurrentContext() (string, error) {
 	out, err := exec.Command("kubectl", "config", "current-context").Output()
 	return strings.TrimSpace(string(out)), err
 }
 
-func (k *Command) Namespaces(context string) ([]string, error) {
+func (k *kubectl) Namespaces(context string) ([]string, error) {
 	out, err := exec.Command("kubectl", "--context", context,
 		"get", "namespaces", "-o", "template",
 		"--template={{range .items}}{{.metadata.name}} {{end}}").Output()

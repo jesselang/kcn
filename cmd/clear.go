@@ -35,7 +35,8 @@ var clearCmd = &cobra.Command{
 	Short: "Clears kcn environment",
 	Long:  "Clears kcn environment",
 	Run: func(cmd *cobra.Command, args []string) {
-		st, err := state.ReadState(os.Getenv(envStatePath))
+		st := state.NewState(state.WithPath(os.Getenv(envStatePath)))
+		err := st.Read()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "kcn: %s\n", err)
 		} else {
